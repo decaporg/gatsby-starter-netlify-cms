@@ -4,7 +4,7 @@
 
 **Note:** This starter uses [Gatsby v4](https://www.gatsbyjs.com/gatsby-4/).
 
-This repo contains an example business website that is built with [Gatsby](https://www.gatsbyjs.org/), and [Decap CMS](https://www.decapcms.org): **[Demo Link](https://gatsby-netlify-cms.netlify.com/)**.
+This repo contains an example business website that is built with [Gatsby](https://www.gatsbyjs.org/), and [Decap CMS](https://www.decapcms.org): **[Demo Link](https://gatsby-decap-cms.netlify.app/)**.
 
 It follows the [JAMstack architecture](https://jamstack.org) by using Git as a single source of truth, and [Netlify](https://www.netlify.com) for continuous deployment, and CDN distribution.
 
@@ -26,7 +26,7 @@ It follows the [JAMstack architecture](https://jamstack.org) by using Git as a s
 
 ## Prerequisites
 
-- Minimal Node.js version 14.15.0
+- Minimal Node.js version 15.14.0
 - [Gatsby CLI](https://www.gatsbyjs.com/docs/reference/gatsby-cli/)
 - [Netlify CLI](https://github.com/netlify/cli)
 
