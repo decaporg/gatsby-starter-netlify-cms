@@ -1,0 +1,58 @@
+<!-- v0.1a-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EEG Data</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="static/js/app.js"></script>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>EEG Data</h1>
+        <canvas id="eegChart"></canvas>
+        <div class="controls">
+            <button id="startBtn" onclick="startAnalysis()">Start Analysis</button>
+            <button id="stopBtn" onclick="stopAnalysis()" disabled>Stop Analysis</button>
+            <button id="calibrateBtn" onclick="startCalibration()">Start Calibration</button>
+            <button id="exportBtn" onclick="exportData()">Export Data</button>
+        </div>
+        <div class="section">
+            <h2>Channel Settings</h2>
+            <label for="enabled_channels">Enabled Channels:</label>
+            <input type="number" id="enabled_channels" name="enabled_channels" min="1" max="8" value="8" oninput="updateSettings()">
+            <span id="enabledChannelsValue">8</span>
+            <br>
+            <label for="ref_enabled">REF Enabled:</label>
+            <input type="checkbox" id="ref_enabled" name="ref_enabled" checked onchange="updateSettings()">
+            <br>
+            <label for="biasout_enabled">BIASOUT Enabled:</label>
+            <input type="checkbox" id="biasout_enabled" name="biasout_enabled" checked onchange="updateSettings()">
+        </div>
+        <div class="section">
+            <h2>Advanced Settings</h2>
+            <label for="baseline_correction_enabled">Baseline Correction:</label>
+            <input type="checkbox" id="baseline_correction_enabled" name="baseline_correction_enabled" checked onchange="updateSettings()">
+            <br>
+            <label for="bandpass_filter_enabled">Bandpass Filter:</label>
+            <input type="checkbox" id="bandpass_filter_enabled" name="bandpass_filter_enabled" onchange="updateSettings()">
+        </div>
+        <div class="section">
+            <h2>Channels</h2>
+            <div class="color-box" data-label="REF" style="background-color: red;"></div>
+            <div class="color-box" data-label="BIASOUT" style="background-color: black;"></div>
+            <div class="color-box" data-label="Ch1" style="background-color: yellow;"></div>
+            <div class="color-box" data-label="Ch2" style="background-color: orange;"></div>
+            <div class="color-box" data-label="Ch3" style="background-color: brown;"></div>
+            <div class="color-box" data-label="Ch4" style="background-color: green;"></div>
+            <div class="color-box" data-label="Ch5" style="background-color: purple;"></div>
+            <div class="color-box" data-label="Ch6" style="background-color: blue;"></div>
+            <div class="color-box" data-label="Ch7" style="background-color: grey;"></div>
+            <div class="color-box" data-label="Ch8" style="background-color: white;"></div>
+        </div>
+    </div>
+</body>
+</html>
