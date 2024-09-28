@@ -1,4 +1,3 @@
-
 ---
 templateKey: blog-post
 title: "Building an Advanced Real-Time EEG Analysis App with Flask and BrainFlow"
