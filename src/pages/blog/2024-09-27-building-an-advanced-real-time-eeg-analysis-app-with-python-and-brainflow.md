@@ -2,7 +2,7 @@
 ---
 templateKey: blog-post
 title: "Building an Advanced Real-Time EEG Analysis App with Flask and BrainFlow"
-date: 2024-09-27T19:09:37.340Z
+date: 2024-09-28T19:09:37.340Z
 description: "A comprehensive guide to creating a real-time EEG analysis and visualization app using Flask, BrainFlow, and PiEEG, with a focus on hardware integration and data streaming."
 featuredpost: true
 featuredimage: /img/eeg_advanced_app.png
@@ -19,45 +19,55 @@ tags:
 
 # Building an Advanced Real-Time EEG Analysis App with Flask and BrainFlow
 
-## Introduction: The Brain-Computer Frontier
+<br/>
 
-Ever wondered what it would be like to see your thoughts come to life as real-time data? It might sound futuristic, but with today’s technology, brain-computer interfaces (BCIs) are becoming a reality for researchers and enthusiasts alike. In this guide, we’re diving deep into the process of creating a fully functional, real-time EEG (Electroencephalography) analysis and visualization app using **Flask**, **BrainFlow**, and **PiEEG**.
+## Introduction: Unleashing the Power of Brain-Computer Interfaces
 
-This isn’t just a project that stops at theory. By the end of this tutorial, you’ll have a tangible system capable of acquiring, processing, and displaying your brain’s electrical activity in an interactive web interface.
+Have you ever wondered what it would be like to actually *see* your brain at work in real time? Imagine watching your mental activity flow across a screen, responding as you think, focus, or even relax. This is no longer a sci-fi concept—it’s achievable with today’s technology. In this guide, we’re diving deep into the world of brain-computer interfaces (BCIs), exploring how to build a fully functional, real-time EEG (Electroencephalography) analysis and visualization app using **Flask**, **BrainFlow**, and **PiEEG**.
 
-We’re building on the foundation laid in our previous post, where we explored the basics of EEG signal acquisition. This time, we’re taking it up a notch by creating a complete real-time analysis system that ties together hardware, data processing, and dynamic visualization—all running on a Raspberry Pi.
+We’ll show you how to bring together hardware, signal processing, and real-time data visualization—all running on a Raspberry Pi. Whether you’re a seasoned developer or just someone who’s curious about the brain’s inner workings, by the end of this tutorial, you’ll have your own system capturing and displaying live brainwave data.
+
+But this isn’t just a simple “hook it up and watch the graph move” project. We’re implementing advanced features like **baseline correction**, **bandpass filtering**, and **real-time streaming** to give you a robust, interactive tool for analyzing brain activity.
+
+> **Tip:** It’s okay if you’re not an EEG expert yet! Focus on the code structure and data flow. Understanding signal processing can come later as you see the project come to life.
 
 ---
 
-## Part 1: Setting Up the Raspberry Pi and Installing Dependencies
 
-### 1.1. Preparing the Raspberry Pi
+## Part 1: Preparing the Raspberry Pi and Installing Dependencies
+Before we get to the fun part, we need to set up our development environment. We’ll be using a Raspberry Pi as the brain of the operation, with a PiEEG board capturing the EEG signals. This section will walk you through preparing your Pi, installing BrainFlow, and configuring the necessary libraries.
+
+### 1.1. Setting Up the Raspberry Pi
 
 To build this EEG app, we’ll use a **Raspberry Pi** as the central processing hub. The PiEEG board, which captures the raw EEG signals, will be connected directly to the GPIO pins on the Pi. Setting up the environment correctly is crucial for a smooth development experience.
 
-1. **Update and Upgrade Your Raspberry Pi**: Start by ensuring your Pi is up to date with the latest system packages:
+1. **Update and Upgrade the Pi**: This ensures you have the latest security patches and dependencies.
 
     ```bash
     sudo apt-get update
     sudo apt-get upgrade -y
     ```
 
-2. **Install Essential Libraries**: Install the necessary libraries and tools, including Python, CMake, and the build utilities required for compiling BrainFlow.
+2. **Install Essential Libraries**: Alongside standard Python libraries, we’ll need to install tools like `cmake` and `libusb` to ensure smooth communication with the PiEEG board.
 
     ```bash
     sudo apt-get install -y git python3 python3-pip python3-venv build-essential cmake libusb-1.0-0-dev
     ```
 
-3. **Set Up a Virtual Environment**: Create a Python virtual environment to keep project dependencies organized.
+3. **Create a Virtual Environment**: Always use a virtual environment! This keeps your project dependencies isolated and prevents conflicts with other Python packages.
 
     ```bash
     python3 -m venv eeg_env
     source eeg_env/bin/activate
     ```
 
+> **Tip:** If you’re new to virtual environments, think of them like sandboxes. They’re isolated areas where you can build your project without worrying about breaking something else on your system.
+
 ### 1.2. Installing BrainFlow for EEG Data Acquisition
 
-BrainFlow is a powerful library designed to work with various biosensors, including the PiEEG board. We’ll clone the repository and install the Python package.
+BrainFlow is the backbone of this project, providing a simple yet powerful interface for capturing EEG data. With BrainFlow, you don’t have to worry about low-level SPI or GPIO configuration—that’s all handled under the hood.
+
+**Clone the BrainFlow repository and install the package.**
 
 ```bash
 # Clone BrainFlow repository
@@ -78,29 +88,22 @@ pip install flask flask-socketio eventlet numpy
 
 ### 1.4. Configuring SPI and GPIO on the Raspberry Pi
 
-To communicate with the PiEEG board, we need to configure the Raspberry Pi’s **SPI** interface and set up GPIO.
+To communicate with the PiEEG board, we’ll need to set up the Raspberry Pi’s SPI interface and configure GPIO settings.
 
-1. **Enable the SPI Interface**:
+1. **Enable the SPI Interface** using `raspi-config`. This step is crucial—without it, your Pi won’t be able to talk to the EEG board.
 
     ```bash
     sudo raspi-config
     ```
     Navigate to **Interface Options** > **SPI** > **Yes**.
 
-2. **Verify the SPI Configuration**: After rebooting, confirm that the SPI module is active:
+2. **Verify the SPI Setup**: Always double-check that the SPI module is active by running `lsmod | grep spi`. If you don’t see the module, go back and recheck your configuration.
 
     ```bash
     lsmod | grep spi
     ```
 
-3. **Set Up GPIO in the Code**:
-
-    **Include your GPIO and SPI setup code here:**
-
-    ```
-    # PLACEHOLDER: Insert your GPIO and SPI configuration code from `app.py`.
-    ```
-
+> **Tip:** GPIO conflicts are a common headache. If you run into issues, use the GPIO utility commands to see what’s already using those pins.
 
 ---
 
@@ -108,12 +111,16 @@ To communicate with the PiEEG board, we need to configure the Raspberry Pi’s *
 
 ### 2.1. Setting Up the Flask Server
 
-With the Raspberry Pi environment configured, it’s time to implement the Flask server. The server will handle HTTP requests, manage WebSocket connections, and stream real-time EEG data to the front-end. We’ll start by setting up the core Flask application.
+The Flask server will serve as the main hub for managing requests, establishing WebSocket connections, and handling data transmission between the front-end and back-end. We’ll start by setting up the core Flask application along with the Socket.IO integration to enable real-time communication.
 
-**Insert the main Flask server setup here:**
+> **Tip:** Flask’s simplicity makes it ideal for rapid development, but it’s also powerful enough to handle complex multi-threaded data streams like our EEG project.
+
+</br>
+
+**Code Snippet: Flask Server Setup:**
 
 ```
-#v0.1a
+# Import the required libraries
 import logging
 import json
 from flask import Flask, render_template, request, jsonify, Response
@@ -132,33 +139,66 @@ import inspect
 import sqlite3
 import base64
 
-# Configure logging
+# Configure logging for detailed information during execution
 logging.basicConfig(level=logging.INFO)
 
+# Initialize Flask app and SocketIO for WebSocket support
 app = Flask(__name__)
 socketio = SocketIO(app)
 
+# Define the main route to serve the web interface
 @app.route('/')
 def index():
     return render_template('index.html')
 
+# Main entry point of the application
 if __name__ == '__main__':
-    running = False
-    collected_data = [[] for _ in range(enabled_channels)]
+    running = False  # Control variable to manage analysis state
+    collected_data = [[] for _ in range(enabled_channels)]  # Initialize data storage for enabled channels
     socketio.run(app, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)
+
 ```
 
-### 2.2. Establishing a Connection with the PiEEG Board Using BrainFlow
+**Explanation:**
 
-BrainFlow makes it easy to capture and process biosensor data. In this step, we’ll implement the connection logic to initialize the PiEEG board and prepare it for data acquisition.
+1. **Logging Configuration:** Provides detailed runtime information.
+2. **Flask and SocketIO Initialization:** Establishes the core server and WebSocket support.
+3. **Main Application Entry:** Sets up the app to listen on all network interfaces, allowing remote access for development and testing.
+
+</br>
+
+### 2.2. Connecting to the PiEEG Board Using BrainFlow
+
+With BrainFlow, connecting to the PiEEG board is straightforward, but there are a few gotchas. Configuring the serial port correctly is crucial—make sure you double-check the `params.serial_port` value. If it’s set wrong, you’ll spend a lot of time troubleshooting.
+
+1. **Initialize the Board**: Use `BoardShim` to connect to the PiEEG and verify that it’s functioning correctly.
+
 
 **Insert the BrainFlow setup code here:**
 
-```
+```python
 # BrainFlow specific settings
 params = BrainFlowInputParams()
 params.serial_port = '/dev/spidev0.0'
 
+# Initialize the variables
+enabled_channels = 8  # Default to 8 channels enabled
+ref_enabled = True  # Default to REF enableds
+biasout_enabled = True  # Default to BIASOUT enabled
+fs = 250  # Sampling frequency
+bandpass_enabled = False
+baseline_correction_enabled = False
+
+# Set up 8 ch for read data
+collected_data = []
+
+calibration_values = [0] * 8
+
+```
+
+2. **Handle GPIO Conflicts**: If you’re using multiple sensors, GPIO conflicts can cause unexpected behavior. Implement the `check_gpio_conflicts()` function to detect and resolve any issues before starting the analysis.
+
+```python
 def cleanup_spi_gpio():
     global spi, chip, line
     try:
@@ -190,28 +230,26 @@ def check_gpio_conflicts():
     except Exception:
         return True  # Conflicts detected
 
-# Initialize the variables
-enabled_channels = 8  # Default to 8 channels enabled
-ref_enabled = True  # Default to REF enableds
-biasout_enabled = True  # Default to BIASOUT enabled
-fs = 250  # Sampling frequency
-bandpass_enabled = False
-baseline_correction_enabled = False
+ ```
 
-# Set up 8 ch for read data
-collected_data = []
+> **Tip:** Debugging GPIO issues? Try running `sudo raspi-gpio get` to see the current state of each pin. It’s a quick way to identify conflicts or misconfigured pins.
 
-calibration_values = [0] * 8
+**Key Points:**
+- **params.serial_port** configures the SPI communication.
+- **cleanup_spi_gpio()** ensures proper cleanup after use
+- **check_gpio_conflicts()** ensures no other processes are using the GPIO lines.
 
-```
+</br>
 
 ### 2.3. Implementing Real-Time Data Streaming
 
-Real-time EEG data streaming is the core functionality of this application. We’ll use WebSockets to send data continuously from the Flask backend to the front-end. This ensures that the EEG data is visualized without lag or delay.
+This is where things get interesting. Real-time EEG data streaming is the core functionality of our application. By using WebSockets, we’ll send data continuously from the Flask backend to the front-end, ensuring that EEG data is visualized without any lag or delay.
+
+1. **Setup WebSocket Communication**: Implement the `read_eeg_data_brainflow()` function to capture data and emit it through Socket.IO. This function will continuously read, process, and send data.
 
 **Insert the `read_eeg_data_brainflow()` function here:**
 
-```
+```python
 def read_eeg_data_brainflow():
     global collected_data
     try:
@@ -229,35 +267,6 @@ def read_eeg_data_brainflow():
             if data_transposed.size == 0:
                 logging.error("No data retrieved from BrainFlow")
                 continue
-
-            # Apply BrainFlow filters if enabled
-            if bandpass_enabled:  # Assume this variable is set based on the checkbox
-                for channel in eeg_channels:
-                    try:
-                        DataFilter.detrend(data_transposed[channel], DetrendOperations.CONSTANT.value)
-                        DataFilter.perform_bandpass(data_transposed[channel], BoardShim.get_sampling_rate(BoardIds.PIEEG_BOARD.value), 3.0, 45.0, 2, FilterTypes.BUTTERWORTH_ZERO_PHASE, 0)
-                        DataFilter.perform_bandstop(data_transposed[channel], BoardShim.get_sampling_rate(BoardIds.PIEEG_BOARD.value), 48.0, 52.0, 2, FilterTypes.BUTTERWORTH_ZERO_PHASE, 0)
-                        DataFilter.perform_bandstop(data_transposed[channel], BoardShim.get_sampling_rate(BoardIds.PIEEG_BOARD.value), 58.0, 62.0, 2, FilterTypes.BUTTERWORTH_ZERO_PHASE, 0)
-                    except Exception as e:
-                        logging.error(f"Error applying filters to channel {channel}: {e}")
-
-            # Apply baseline correction if enabled
-            if baseline_correction_enabled:  # Assume this variable is set based on the checkbox
-                for idx in range(len(eeg_channels)):
-                    data_transposed[idx] -= calibration_values[idx]
-
-            # Normalize REF channel if necessary
-            ref_channel_index = 0  # Assuming REF channel is the first in eeg_channels
-            ref_values = data_transposed[ref_channel_index]
-            ref_mean = ref_values.mean()
-            ref_std = ref_values.std()
-
-            logging.info(f"REF Channel - Mean: {ref_mean}, Std Dev: {ref_std}")
-
-            # Normalize if the mean is significantly higher than expected
-            if ref_mean > 1000:  # This threshold can be adjusted based on expected range
-                data_transposed[ref_channel_index] = (ref_values - ref_mean) / ref_std
-                logging.info(f"Normalized REF Channel - Mean: {data_transposed[ref_channel_index].mean()}, Std Dev: {data_transposed[ref_channel_index].std()}")
 
             data_transposed = data_transposed.tolist()  # Convert to list for easier processing
             
@@ -282,12 +291,47 @@ def read_eeg_data_brainflow():
         logging.error(f"Unexpected error: {e}")
 ```
 
-### 2.4. Adding Start & Stop Analysis 
-To provide users with complete control over the streaming process, lets add routes to start and stop EEG analysis. 
+2. **Apply Filters and Normalization**: EEG signals are notoriously noisy. Adding a bandpass filter and performing baseline correction can significantly improve signal quality.
+
+```python
+ # Apply BrainFlow filters if enabled
+if bandpass_enabled:  # Assume this variable is set based on the checkbox
+    for channel in eeg_channels:
+        try:
+            DataFilter.detrend(data_transposed[channel], DetrendOperations.CONSTANT.value)
+            DataFilter.perform_bandpass(data_transposed[channel], BoardShim.get_sampling_rate(BoardIds.PIEEG_BOARD.value), 3.0, 45.0, 2, FilterTypes.BUTTERWORTH_ZERO_PHASE, 0)
+            DataFilter.perform_bandstop(data_transposed[channel], BoardShim.get_sampling_rate(BoardIds.PIEEG_BOARD.value), 48.0, 52.0, 2, FilterTypes.BUTTERWORTH_ZERO_PHASE, 0)
+            DataFilter.perform_bandstop(data_transposed[channel], BoardShim.get_sampling_rate(BoardIds.PIEEG_BOARD.value), 58.0, 62.0, 2, FilterTypes.BUTTERWORTH_ZERO_PHASE, 0)
+        except Exception as e:
+            logging.error(f"Error applying filters to channel {channel}: {e}")
+
+# Normalize REF channel if necessary
+ref_channel_index = 0  # Assuming REF channel is the first in eeg_channels
+ref_values = data_transposed[ref_channel_index]
+ref_mean = ref_values.mean()
+ref_std = ref_values.std()
+
+logging.info(f"REF Channel - Mean: {ref_mean}, Std Dev: {ref_std}")
+
+# Normalize if the mean is significantly higher than expected
+if ref_mean > 1000:  # This threshold can be adjusted based on expected range
+    data_transposed[ref_channel_index] = (ref_values - ref_mean) / ref_std
+    logging.info(f"Normalized REF Channel - Mean: {data_transposed[ref_channel_index].mean()}, Std Dev: {data_transposed[ref_channel_index].std()}")
+```
+> **Tip:** Visualize raw data first before applying filters. This helps you understand what noise looks like in your specific setup and avoid accidentally removing valuable signal information.
+
+**Key Points:**
+- **Filters:** This section applies optional filters (bandpass, baseline correction).
+- **WebSocket Streaming:** socketio.emit() sends the processed data to the client for real-time visualization.
+
+### 2.4. Creating the Analysis Control Routes
+The Flask server will also handle control routes for starting and stopping the analysis. Use HTTP POST requests to toggle the analysis state and manage background threads. This provides a clean interface for integrating with the front-end controls.
+
+1. **Create the `start_analysis()` Route**: This will initialize the BrainFlow session and start streaming data.
 
 **Insert the `start-analysis` and `/stop-analysis` function here:**
 
-```
+```python
 @app.route('/start-analysis', methods=['POST'])
 def start_analysis():
     global running
@@ -298,7 +342,10 @@ def start_analysis():
         return jsonify({"status": "GPIO conflict detected. Please resolve before starting BrainFlow."}), 409
     
     threading.Thread(target=read_eeg_data_brainflow, daemon=True).start()
+```
+2. **Create the `stop_analysis()` Route**: Gracefully stop the analysis, ensuring all resources are released.
 
+```python
 @app.route('/stop-analysis', methods=['POST'])
 def stop_analysis():
     global running
@@ -309,13 +356,19 @@ def stop_analysis():
     return jsonify({"status": "Analysis stopped"})
 ```
 
-### 2.5. Adding Advanced Data Processing Options
+> **Tip:** Gracefully handle errors here. If the board isn’t properly initialized, BrainFlow can throw exceptions that crash your server. Wrap sensitive code in `try...except` blocks.
 
-To provide users with more control over the data, lets add a route to update settings for advanced filtering options like **baseline correction** and **bandpass filtering**. These options should be configurable through the front-end and applied dynamically during data streaming.
+**Key Points:**
+- Starts and stops the real-time analysis via HTTP POST requests.
+- Threading is used to run the EEG streaming in the background.
+
+### 2.5. Implementing Advanced Data Processing Options
+
+To give users more control, we’ll add routes to update settings like **bandpass filtering** and **baseline correction**. These options should be configurable through the front-end and applied dynamically during data streaming.
 
 **Insert the `update_settings()` function here:**
 
-```
+```python
 @app.route('/update-settings', methods=['POST'])
 def update_settings():
     global lowcut, highcut, order, baseline_correction_enabled, enabled_channels, ref_enabled, biasout_enabled, bandpass_enabled, smoothing_enabled, acquisition_method
@@ -333,13 +386,17 @@ def update_settings():
     return jsonify({"status": "Settings updated"})
 ```
 
-### 2.5. Managing Calibration and Signal Integrity
+> **Tip:** Make sure to validate user inputs on the server-side. Unexpected values (e.g., a negative cutoff frequency for a filter) can cause your app to behave unpredictably.
 
-Calibration routines help establish a reliable baseline, reducing noise and ensuring accurate readings. Implement a dedicated route and function for calibrating the PiEEG board, allowing users to optimize signal quality before starting the data acquisition.
+### 2.6. Managing Calibration and Signal Integrity
+
+Calibration routines establish a reliable baseline for the EEG data, reducing noise and ensuring accurate readings. Create a dedicated function to collect and average data over a few seconds to establish calibration values.
+
+1. **Implement a Calibration Routine**: This should run a brief session and compute the mean for each channel, storing the values for later use.
 
 **Insert the calibration function here:**
 
-```
+```python
 def calibrate():
     global calibration_values
     try:
@@ -376,13 +433,24 @@ def calibrate():
         logging.error(f"Unexpected calibration error: {e}")
 ```
 
-### 2.6. Implementing Data Export
+2. **Use Calibration for Real-Time Normalization**: Subtract the calibration values from incoming data to minimize drift. Update `read_eeg_data_brainflow()` to include **baseline correction**.
 
-Data export allows users to save their EEG recordings for offline analysis. This is crucial for researchers or enthusiasts who want to study their sessions in-depth.
+```python
+# Apply baseline correction if enabled
+if baseline_correction_enabled:  # Assume this variable is set based on the checkbox
+    for idx in range(len(eeg_channels)):
+        data_transposed[idx] -= calibration_values[idx]
+```
+
+> **Tip:** Run the calibration routine multiple times to get a sense of the baseline variability. If values fluctuate too much, consider optimizing your setup (e.g., electrode placement).
+
+### 2.7. Exporting EEG Data for Offline Analysis
+
+Implement the data export functionality to allow users to save their EEG recordings for further analysis. This is crucial for researchers who want to dive deeper into the sessions and compare multiple recordings.
 
 **Insert the `export_data` route here:**
 
-```
+```python
 # Function to create CSV data
 def create_csv(data):
     import csv
@@ -439,7 +507,7 @@ The front-end is where users will interact with the EEG analysis app, configure 
 
 **Insert your complete `index.html` file here:**
 
-```
+```html
 <!-- v0.1a-->
 <!DOCTYPE html>
 <html lang="en">
@@ -501,7 +569,7 @@ The front-end is where users will interact with the EEG analysis app, configure 
 
 ```
 
-### 3.2. Adding Styles for a Professional Look
+### 3.2. Styling the Interface with CSS
 
 Use CSS to style the interface, making it visually appealing and easy to navigate. Proper styling enhances usability and provides a better overall user experience.
 
@@ -564,232 +632,6 @@ input[type="range"] {
         flex-direction: column;
     }
 }
-.popup {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    overflow: auto;
-}
-
-.popup-content {
-    background-color: #333;
-    margin: 2% auto;
-    padding: 20px;
-    border: 1px solid #555;
-    width: 90%;
-    max-width: 1600px;
-    max-height: 95vh;
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    color: #fefefe;
-}
-
-.plot-container {
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-}
-
-#plotImage {
-    max-width: 100%;
-    max-height: 70vh;
-    object-fit: contain;
-    border: 1px solid #555;
-}
-
-.close {
-    color: #ccc;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close:hover,
-.close:focus {
-    color: #fff;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-body.popup-active {
-    overflow: hidden;
-}
-
-#plotStats {
-    margin-top: 20px;
-    overflow-x: auto;
-}
-
-#plotStats table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-#plotStats th, #plotStats td {
-    border: 1px solid #555;
-    padding: 8px;
-    text-align: left;
-}
-
-#plotStats th {
-    background-color: #444;
-    color: #fefefe;
-}
-
-#plotStats td {
-    background-color: #555;
-    color: #fefefe;
-}
-
-/* New styles for the terminal window */
-.terminal-window {
-    background-color: #000;
-    color: #0f0;
-    font-family: monospace;
-    padding: 10px;
-    border-radius: 5px;
-    margin-top: 20px;
-    border: 1px solid #0f0;
-}
-
-.terminal-header {
-    background-color: #0f0;
-    padding: 5px;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-}
-
-.terminal-title {
-    color: #000;
-    font-weight: bold;
-}
-
-.terminal-content {
-    height: 200px;
-    overflow-y: auto;
-    padding: 10px;
-}
-
-.terminal-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.terminal-content::-webkit-scrollbar-track {
-    background: #000;
-}
-
-.terminal-content::-webkit-scrollbar-thumb {
-    background-color: #0f0;
-    border-radius: 4px;
-}
-
-/* New styles for enroll brainwaves */
-.enrollBrainwavesPopup {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    overflow: auto;
-    justify-content: center;
-    align-items: center;
-}
-
-.enrollBrainwavesPopup-content {
-    background-color: #333;
-    margin: 2% auto;
-    padding: 20px;
-    border: 1px solid #555;
-    width: 60%; /* Reduce width to make it more square */
-    max-width: 1000px;
-    height: 70%; /* Increase height */
-    max-height: 80vh;
-    overflow: auto;
-    display: flex;
-    flex-direction: column;
-    color: #fefefe;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-}
-
-.enrollBrainwavesHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #555;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-}
-
-.enrollBrainwavesHeader h2 {
-    margin: 0;
-}
-
-.close {
-    font-size: 28px;
-    font-weight: bold;
-    color: #fefefe;
-    cursor: pointer;
-}
-
-.close:hover,
-.close:focus {
-    color: #bbb;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-.instruction, .visual, .progress-bar {
-    margin-bottom: 20px;
-}
-
-#enrollBrainwavesInstruction {
-    font-size: 24px;
-    margin-bottom: 20px;
-}
-
-.visual {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-    flex-grow: 1; /* Allow the visual element to grow */
-}
-
-.visual-element {
-    max-width: 100%;
-    max-height: 100%; /* Allow the visual element to take full available space */
-    margin-bottom: 20px;
-}
-
-#embeddedPlotsContainer {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.plotDiv {
-    margin: 10px;
-    text-align: center;
-}
-
-#textDisplay {
-    font-size: 48px;
-    font-weight: bold;
-}
-
 
 ```
 
@@ -800,29 +642,11 @@ JavaScript is the backbone of the front-end interactivity. It manages WebSocket 
 **Insert your complete `app.js` file here:**
 
 ```
-document.addEventListener("DOMContentLoaded", function () {
-    ctx = document.getElementById('eegChart').getContext('2d');
-    updateSettings(); // Required to clean up settings on first run.
-
-
-    const colorBoxes = document.querySelectorAll('.color-box');
-    colorBoxes.forEach(box => {
-        box.addEventListener('click', function () {
-            const label = this.getAttribute('data-label');
-            const dataset = eegChart.data.datasets.find(ds => ds.label === label);
-            if (dataset) {
-                dataset.hidden = !dataset.hidden;
-                eegChart.update();
-            }
-        });
-    });
-});
-
+// Global Variables
+let ctx, eegChart;
 const socket = io();
 
-let ctx;
-let eegChart;
-
+// Color Configuration for EEG Channels
 const colors = {
     ref: 'red',
     biasout: 'black',
@@ -836,52 +660,14 @@ const colors = {
     ch8: 'white'
 };
 
-function createChart() {
-    if (eegChart) {
-        eegChart.destroy();
-    }
-    const datasets = [];
-    const enabledChannels = parseInt(document.getElementById('enabled_channels').value, 10);
-    if (document.getElementById('ref_enabled').checked) {
-        datasets.push({
-            label: 'REF',
-            data: [],
-            borderColor: colors.ref,
-            fill: false
-        });
-    }
-    if (document.getElementById('biasout_enabled').checked) {
-        datasets.push({
-            label: 'BIASOUT',
-            data: [],
-            borderColor: colors.biasout,
-            fill: false
-        });
-    }
-    for (let i = 0; i < enabledChannels; i++) {
-        datasets.push({
-            label: `Ch${i + 1}`,
-            data: [],
-            borderColor: colors[`ch${i + 1}`],
-            fill: false
-        });
-    }
-    eegChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: [],
-            datasets: datasets
-        },
-        options: {
-            animation: false,
-            scales: {
-                x: { type: 'linear', position: 'bottom' },
-                y: { type: 'linear' }
-            }
-        }
-    });
-}
+// Initialize the Chart When DOM is Ready
+document.addEventListener("DOMContentLoaded", function () {
+    ctx = document.getElementById('eegChart').getContext('2d');
+    updateSettings(); // Initial settings load
+    setupColorBoxListeners(); // Enable color-box click events
+});
 
+// WebSocket Event Listener for Updating the Chart with Real-Time Data
 socket.on('update_data', function (data) {
     if (eegChart.data.labels.length > 100) {
         eegChart.data.labels.shift();
@@ -896,28 +682,66 @@ socket.on('update_data', function (data) {
     eegChart.update();
 });
 
-socket.on('analysis_stopped', function () {
-    const acquisition_method = document.getElementById('acquisition_method').value;
-    if (acquisition_method === "brainflow") {
-        disableSpiSettings(); //Disable settings that are not used by BrainFlow.
-    }
-});
+// Create and Update the Chart Based on Current Settings
+function createChart() {
+    if (eegChart) eegChart.destroy();
 
-function startAnalysis() {
-    disableControls(true);
-    fetch('/start-analysis', { method: 'POST' }).then(response => {
-        if (response.status === 409) {
-            response.json().then(data => alert(data.status));
-            disableControls(false);
-        }
+    const datasets = [];
+    const enabledChannels = parseInt(document.getElementById('enabled_channels').value, 10);
+
+    // Add Channels Based on Settings
+    if (document.getElementById('ref_enabled').checked) {
+        datasets.push({ label: 'REF', data: [], borderColor: colors.ref, fill: false });
+    }
+    if (document.getElementById('biasout_enabled').checked) {
+        datasets.push({ label: 'BIASOUT', data: [], borderColor: colors.biasout, fill: false });
+    }
+
+    for (let i = 0; i < enabledChannels; i++) {
+        datasets.push({ label: `Ch${i + 1}`, data: [], borderColor: colors[`ch${i + 1}`], fill: false });
+    }
+
+    // Create Chart.js Line Chart
+    eegChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels: [], datasets: datasets },
+        options: { animation: false, scales: { x: { type: 'linear' }, y: { type: 'linear' } } }
     });
 }
 
-function stopAnalysis() {
-    disableControls(false);
-    fetch('/stop-analysis', { method: 'POST' });
+// Update Settings from the Front-End Controls
+function updateSettings() {
+    const enabledChannels = document.getElementById('enabled_channels').value;
+    document.getElementById('enabledChannelsValue').innerText = enabledChannels;
+    createChart();
+
+    // Send Updated Settings to the Server
+    fetch('/update-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            baseline_correction_enabled: document.getElementById('baseline_correction_enabled').checked,
+            enabled_channels: enabledChannels,
+            ref_enabled: document.getElementById('ref_enabled').checked,
+            biasout_enabled: document.getElementById('biasout_enabled').checked,
+            bandpass_filter_enabled: document.getElementById('bandpass_filter_enabled').checked,
+        })
+    });
 }
 
+// Start the Real-Time EEG Analysis
+function startAnalysis() {
+    disableControls(true);
+    fetch('/start-analysis', { method: 'POST' }).catch(err => console.error('Failed to start analysis:', err));
+}
+
+// Stop the Real-Time EEG Analysis
+function stopAnalysis() {
+    disableControls(false);
+    fetch('/stop-analysis', { method: 'POST' }).catch(err => console.error('Failed to stop analysis:', err));
+}
+
+// Start Calibration Process
 function startCalibration() {
     disableControls(true);
     const btn = document.getElementById('calibrateBtn');
@@ -936,59 +760,11 @@ function startCalibration() {
         });
 }
 
-function updateSettings() {
-    const baseline_correction_enabled = document.getElementById('baseline_correction_enabled').checked;
-    const enabled_channels = document.getElementById('enabled_channels').value;
-    const ref_enabled = document.getElementById('ref_enabled').checked;
-    const biasout_enabled = document.getElementById('biasout_enabled').checked;
-    const bandpass_filter_enabled = document.getElementById('bandpass_filter_enabled').checked;
-
-    document.getElementById('enabledChannelsValue').innerText = enabled_channels;
-
-    createChart();
-
-    fetch('/update-settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-
-            baseline_correction_enabled,
-            enabled_channels,
-            ref_enabled,
-            biasout_enabled,
-            bandpass_filter_enabled,
-        })
-    });
-
-    if (acquisition_method === "brainflow") {
-        disableSpiSettings();
-    } else {
-        enableSpiSettings();
-    }
-}
-
-function disableControls(disable) {
-    document.getElementById('startBtn').disabled = disable;
-    document.getElementById('stopBtn').disabled = !disable;
-    document.getElementById('calibrateBtn').disabled = disable;
-    document.getElementById('exportBtn').disabled = disable;
-    document.getElementById('baseline_correction_enabled').disabled = disable;
-    document.getElementById('enabled_channels').disabled = disable;
-    document.getElementById('ref_enabled').disabled = disable;
-    document.getElementById('biasout_enabled').disabled = disable;
-    document.getElementById('bandpass_filter_enabled').disabled = disable;
-}
-
-
+// Export EEG Data to CSV
 function exportData() {
     const numRows = prompt("Enter the number of rows to export:", 5000);
     fetch(`/export-data?num_rows=${numRows}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.blob();
-        })
+        .then(response => response.blob())
         .then(blob => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1002,7 +778,20 @@ function exportData() {
         .catch(err => console.error('Error exporting data:', err));
 }
 
-document.addEventListener("DOMContentLoaded", function () {
+// Helper to Enable or Disable Controls
+function disableControls(disable) {
+    document.getElementById('startBtn').disabled = disable;
+    document.getElementById('stopBtn').disabled = !disable;
+    document.getElementById('calibrateBtn').disabled = disable;
+    document.getElementById('exportBtn').disabled = disable;
+    document.getElementById('enabled_channels').disabled = disable;
+    document.getElementById('ref_enabled').disabled = disable;
+    document.getElementById('biasout_enabled').disabled = disable;
+    document.getElementById('bandpass_filter_enabled').disabled = disable;
+}
+
+// Setup Color Box Listeners for Hiding/Showing Channels
+function setupColorBoxListeners() {
     const colorBoxes = document.querySelectorAll('.color-box');
     colorBoxes.forEach(box => {
         box.addEventListener('click', function () {
@@ -1014,153 +803,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
-});
-
-function openFileDialog(fileTypes) {
-    return new Promise((resolve, reject) => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = fileTypes.map(type => `.${type[1].split('.')[1]}`).join(',');
-        input.onchange = e => {
-            if (e.target.files.length > 0) {
-                resolve(e.target.files[0]);
-            } else {
-                reject(new Error('No file selected'));
-            }
-        };
-        input.click();
-    });
 }
-
-socket.on('file_ready', function(data) {
-    console.log('File is ready:', data);
-    // You can add any client-side logic here that needs to run when the file is ready
-});
-
-let originalBodyOverflow;
-
-
-function fetchAndGeneratePlots(sessionId) {
-    console.log('Fetching features for session:', sessionId);
-
-    fetch(`/get_features/${sessionId}`)
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Received data:', data);
-
-            if (data.length === 0) {
-                console.error('No features found for session:', sessionId);
-                return;
-            }
-
-            const container = document.getElementById('embeddedPlotsContainer');
-            container.innerHTML = '';  // Clear any existing content
-
-            data.forEach(item => {
-                const [taskName, encodedFeatures] = item;
-
-                console.log('Processing task:', taskName);
-                console.log('Encoded features:', encodedFeatures);
-
-                // Decode the base64-encoded features
-                const decodedFeatures = new Float64Array(
-                    atob(encodedFeatures).split('').map(char => char.charCodeAt(0))
-                );
-
-                console.log('Decoded features:', decodedFeatures);
-
-                // Generate the plot using the decoded features
-                const plotData = generatePlotData(decodedFeatures);
-
-                console.log('Generated plot data:', plotData);
-
-                // Create a new div for the plot and title
-                const plotDiv = document.createElement('div');
-                plotDiv.className = 'plotDiv';
-
-                const plotTitleElement = document.createElement('h3');
-                plotTitleElement.textContent = taskName;
-                plotDiv.appendChild(plotTitleElement);
-
-                // Create and append the plot image
-                const plotCanvas = document.createElement('canvas');
-                plotDiv.appendChild(plotCanvas);
-
-                // Append the plot div to the container
-                container.appendChild(plotDiv);
-
-                // Render the chart
-                new Chart(plotCanvas, plotData);
-            });
-        })
-        .catch(error => console.error('Error fetching features:', error));
-}
-
-function generatePlotData(features) {
-    console.log('Generating plot data for features:', features);
-
-    // Use Chart.js to generate the plot
-    const data = {
-        labels: [...Array(features.length).keys()],
-        datasets: [{
-            label: 'EEG Data',
-            data: features,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            fill: false,
-            tension: 0.1
-        }]
-    };
-
-    const config = {
-        type: 'line',
-        data: data,
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'top',
-                },
-                title: {
-                    display: true,
-                    text: 'EEG Data Plot'
-                }
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Sample'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Amplitude'
-                    }
-                }
-            }
-        }
-    };
-
-    return config;
-}
-
-
-socket.on('connect', function() {
-    console.log('Connected to server');
-});
-
-socket.on('disconnect', function() {
-    console.log('Disconnected from server');
-});
 
 ```
 
