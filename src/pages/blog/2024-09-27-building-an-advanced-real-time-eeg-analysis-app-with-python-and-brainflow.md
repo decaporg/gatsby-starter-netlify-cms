@@ -17,29 +17,39 @@ tags:
   - gpio
 ---
 
-# Building an Advanced Real-Time EEG Analysis App with Flask and BrainFlow
+![Ultracortex Headset](/img/img_0505.jpeg)
 
-<br/>
+<br />
 
 ## Introduction: Unleashing the Power of Brain-Computer Interfaces
+<br />
 
-Have you ever wondered what it would be like to actually *see* your brain at work in real time? Imagine watching your mental activity flow across a screen, responding as you think, focus, or even relax. This is no longer a sci-fi concept—it’s achievable with today’s technology. In this guide, we’re diving deep into the world of brain-computer interfaces (BCIs), exploring how to build a fully functional, real-time EEG (Electroencephalography) analysis and visualization app using **Flask**, **BrainFlow**, and **PiEEG**.
+In this guide, we’re diving deep into the world of brain-computer interfaces (BCIs), exploring how to build a fully functional, real-time EEG (Electroencephalography) analysis and visualization app using **Flask**, **BrainFlow**, and **PiEEG**.
 
-We’ll show you how to bring together hardware, signal processing, and real-time data visualization—all running on a Raspberry Pi. Whether you’re a seasoned developer or just someone who’s curious about the brain’s inner workings, by the end of this tutorial, you’ll have your own system capturing and displaying live brainwave data.
+By the end of this blog you will learn how to bring together hardware, signal processing, and real-time data visualization—all running on a Raspberry Pi.
 
-But this isn’t just a simple “hook it up and watch the graph move” project. We’re implementing advanced features like **baseline correction**, **bandpass filtering**, and **real-time streaming** to give you a robust, interactive tool for analyzing brain activity.
+This isn’t just a simple “hook it up and watch the graph move” project. We’re implementing advanced features like **baseline correction**, **bandpass filtering**, and **real-time streaming** to give you a robust, interactive tool for analyzing brain activity.
+
+<br />
 
 > **Tip:** It’s okay if you’re not an EEG expert yet! Focus on the code structure and data flow. Understanding signal processing can come later as you see the project come to life.
 
 ---
 
+<br />
 
 ## Part 1: Preparing the Raspberry Pi and Installing Dependencies
 Before we get to the fun part, we need to set up our development environment. We’ll be using a Raspberry Pi as the brain of the operation, with a PiEEG board capturing the EEG signals. This section will walk you through preparing your Pi, installing BrainFlow, and configuring the necessary libraries.
 
-### 1.1. Setting Up the Raspberry Pi
+<br />
+
+### Setting Up the Raspberry Pi
+
+<br />
 
 To build this EEG app, we’ll use a **Raspberry Pi** as the central processing hub. The PiEEG board, which captures the raw EEG signals, will be connected directly to the GPIO pins on the Pi. Setting up the environment correctly is crucial for a smooth development experience.
+
+<br />
 
 1. **Update and Upgrade the Pi**: This ensures you have the latest security patches and dependencies.
 
@@ -48,11 +58,15 @@ To build this EEG app, we’ll use a **Raspberry Pi** as the central processing 
     sudo apt-get upgrade -y
     ```
 
+<br />
+
 2. **Install Essential Libraries**: Alongside standard Python libraries, we’ll need to install tools like `cmake` and `libusb` to ensure smooth communication with the PiEEG board.
 
     ```bash
     sudo apt-get install -y git python3 python3-pip python3-venv build-essential cmake libusb-1.0-0-dev
     ```
+
+<br />
 
 3. **Create a Virtual Environment**: Always use a virtual environment! This keeps your project dependencies isolated and prevents conflicts with other Python packages.
 
@@ -61,11 +75,19 @@ To build this EEG app, we’ll use a **Raspberry Pi** as the central processing 
     source eeg_env/bin/activate
     ```
 
+<br />
+
 > **Tip:** If you’re new to virtual environments, think of them like sandboxes. They’re isolated areas where you can build your project without worrying about breaking something else on your system.
 
-### 1.2. Installing BrainFlow for EEG Data Acquisition
+<br />
+
+### Installing BrainFlow for EEG Data Acquisition
+
+<br />
 
 BrainFlow is the backbone of this project, providing a simple yet powerful interface for capturing EEG data. With BrainFlow, you don’t have to worry about low-level SPI or GPIO configuration—that’s all handled under the hood.
+
+<br />
 
 **Clone the BrainFlow repository and install the package.**
 
@@ -78,17 +100,29 @@ cd brainflow/python-package
 python setup.py install
 ```
 
-### 1.3. Installing Flask and Supporting Libraries
+<br />
+
+### Installing Flask and Supporting Libraries
+
+<br />
 
 Flask will serve as the backbone of our application. It handles HTTP requests, serves our front-end, and manages WebSocket connections.
+
+<br />
 
 ```bash
 pip install flask flask-socketio eventlet numpy
 ```
 
-### 1.4. Configuring SPI and GPIO on the Raspberry Pi
+<br />
+
+### Configuring SPI and GPIO on the Raspberry Pi
+
+<br />
 
 To communicate with the PiEEG board, we’ll need to set up the Raspberry Pi’s SPI interface and configure GPIO settings.
+
+<br />
 
 1. **Enable the SPI Interface** using `raspi-config`. This step is crucial—without it, your Pi won’t be able to talk to the EEG board.
 
@@ -97,19 +131,27 @@ To communicate with the PiEEG board, we’ll need to set up the Raspberry Pi’s
     ```
     Navigate to **Interface Options** > **SPI** > **Yes**.
 
+<br />
+
 2. **Verify the SPI Setup**: Always double-check that the SPI module is active by running `lsmod | grep spi`. If you don’t see the module, go back and recheck your configuration.
 
     ```bash
     lsmod | grep spi
     ```
 
+<br />
+
 > **Tip:** GPIO conflicts are a common headache. If you run into issues, use the GPIO utility commands to see what’s already using those pins.
 
 ---
 
+<br />
+
 ## Part 2: Implementing the Flask Server and Real-Time Data Acquisition
 
-### 2.1. Setting Up the Flask Server
+<br />
+
+### Setting Up the Flask Server
 
 The Flask server will serve as the main hub for managing requests, establishing WebSocket connections, and handling data transmission between the front-end and back-end. We’ll start by setting up the core Flask application along with the Socket.IO integration to enable real-time communication.
 
@@ -117,7 +159,7 @@ The Flask server will serve as the main hub for managing requests, establishing 
 
 </br>
 
-**Code Snippet: Flask Server Setup:**
+**Implement a Basic Flask Server:**
 
 ```
 # Import the required libraries
@@ -167,14 +209,15 @@ if __name__ == '__main__':
 
 </br>
 
-### 2.2. Connecting to the PiEEG Board Using BrainFlow
+### Connecting to the PiEEG Board Using BrainFlow
+
+</br>
 
 With BrainFlow, connecting to the PiEEG board is straightforward, but there are a few gotchas. Configuring the serial port correctly is crucial—make sure you double-check the `params.serial_port` value. If it’s set wrong, you’ll spend a lot of time troubleshooting.
 
-1. **Initialize the Board**: Use `BoardShim` to connect to the PiEEG and verify that it’s functioning correctly.
+</br>
 
-
-**Insert the BrainFlow setup code here:**
+**Initialize the Board**: Use `BoardShim` to connect to the PiEEG and verify that it’s functioning correctly.
 
 ```python
 # BrainFlow specific settings
@@ -196,7 +239,10 @@ calibration_values = [0] * 8
 
 ```
 
-2. **Handle GPIO Conflicts**: If you’re using multiple sensors, GPIO conflicts can cause unexpected behavior. Implement the `check_gpio_conflicts()` function to detect and resolve any issues before starting the analysis.
+
+</br>
+
+**Handle GPIO Conflicts**: If you’re using multiple sensors, GPIO conflicts can cause unexpected behavior. Implement the `check_gpio_conflicts()` function to detect and resolve any issues before starting the analysis.
 
 ```python
 def cleanup_spi_gpio():
@@ -232,7 +278,7 @@ def check_gpio_conflicts():
 
  ```
 
-> **Tip:** Debugging GPIO issues? Try running `sudo raspi-gpio get` to see the current state of each pin. It’s a quick way to identify conflicts or misconfigured pins.
+</br>
 
 **Key Points:**
 - **params.serial_port** configures the SPI communication.
@@ -241,13 +287,20 @@ def check_gpio_conflicts():
 
 </br>
 
-### 2.3. Implementing Real-Time Data Streaming
+> **Tip:** Debugging GPIO issues? Try running `sudo raspi-gpio get` to see the current state of each pin. It’s a quick way to identify conflicts or misconfigured pins.
+
+</br>
+
+### Implementing Real-Time Data Streaming
+
+</br>
 
 This is where things get interesting. Real-time EEG data streaming is the core functionality of our application. By using WebSockets, we’ll send data continuously from the Flask backend to the front-end, ensuring that EEG data is visualized without any lag or delay.
 
-1. **Setup WebSocket Communication**: Implement the `read_eeg_data_brainflow()` function to capture data and emit it through Socket.IO. This function will continuously read, process, and send data.
+</br>
 
-**Insert the `read_eeg_data_brainflow()` function here:**
+**Setup WebSocket Communication**: Implement the `read_eeg_data_brainflow()` function to capture data and emit it through Socket.IO. This function will continuously read, process, and send data.
+
 
 ```python
 def read_eeg_data_brainflow():
@@ -291,7 +344,9 @@ def read_eeg_data_brainflow():
         logging.error(f"Unexpected error: {e}")
 ```
 
-2. **Apply Filters and Normalization**: EEG signals are notoriously noisy. Adding a bandpass filter and performing baseline correction can significantly improve signal quality.
+</br>
+
+**Apply Filters and Normalization**: EEG signals are notoriously noisy. Adding a bandpass filter and performing baseline correction can significantly improve signal quality.
 
 ```python
  # Apply BrainFlow filters if enabled
@@ -318,18 +373,27 @@ if ref_mean > 1000:  # This threshold can be adjusted based on expected range
     data_transposed[ref_channel_index] = (ref_values - ref_mean) / ref_std
     logging.info(f"Normalized REF Channel - Mean: {data_transposed[ref_channel_index].mean()}, Std Dev: {data_transposed[ref_channel_index].std()}")
 ```
-> **Tip:** Visualize raw data first before applying filters. This helps you understand what noise looks like in your specific setup and avoid accidentally removing valuable signal information.
+
+</br>
 
 **Key Points:**
 - **Filters:** This section applies optional filters (bandpass, baseline correction).
 - **WebSocket Streaming:** socketio.emit() sends the processed data to the client for real-time visualization.
 
-### 2.4. Creating the Analysis Control Routes
+</br>
+
+> **Tip:** Visualize raw data first before applying filters. This helps you understand what noise looks like in your specific setup and avoid accidentally removing valuable signal information.
+
+</br>
+
+### Creating the Analysis Control Routes
+</br>
+
 The Flask server will also handle control routes for starting and stopping the analysis. Use HTTP POST requests to toggle the analysis state and manage background threads. This provides a clean interface for integrating with the front-end controls.
 
-1. **Create the `start_analysis()` Route**: This will initialize the BrainFlow session and start streaming data.
+</br>
 
-**Insert the `start-analysis` and `/stop-analysis` function here:**
+**Create the `start_analysis()` Route**: This will initialize the BrainFlow session and start streaming data.
 
 ```python
 @app.route('/start-analysis', methods=['POST'])
@@ -343,7 +407,12 @@ def start_analysis():
     
     threading.Thread(target=read_eeg_data_brainflow, daemon=True).start()
 ```
-2. **Create the `stop_analysis()` Route**: Gracefully stop the analysis, ensuring all resources are released.
+
+</br>
+
+**Create the `stop_analysis()` Route**: Gracefully stop the analysis, ensuring all resources are released.
+
+</br>
 
 ```python
 @app.route('/stop-analysis', methods=['POST'])
@@ -356,17 +425,21 @@ def stop_analysis():
     return jsonify({"status": "Analysis stopped"})
 ```
 
+</br>
+
 > **Tip:** Gracefully handle errors here. If the board isn’t properly initialized, BrainFlow can throw exceptions that crash your server. Wrap sensitive code in `try...except` blocks.
 
-**Key Points:**
-- Starts and stops the real-time analysis via HTTP POST requests.
-- Threading is used to run the EEG streaming in the background.
+</br>
 
-### 2.5. Implementing Advanced Data Processing Options
+### Implementing Advanced Data Processing Options
 
-To give users more control, we’ll add routes to update settings like **bandpass filtering** and **baseline correction**. These options should be configurable through the front-end and applied dynamically during data streaming.
+</br>
 
-**Insert the `update_settings()` function here:**
+To give users more control, we’ll add an `update_settings()` route to update settings like **bandpass filtering** and **baseline correction**. These options should be configurable through the front-end and applied dynamically during data streaming.
+
+</br>
+
+**Implement the `update_settings()` route:**
 
 ```python
 @app.route('/update-settings', methods=['POST'])
@@ -386,15 +459,21 @@ def update_settings():
     return jsonify({"status": "Settings updated"})
 ```
 
+</br>
+
 > **Tip:** Make sure to validate user inputs on the server-side. Unexpected values (e.g., a negative cutoff frequency for a filter) can cause your app to behave unpredictably.
 
-### 2.6. Managing Calibration and Signal Integrity
+</br>
+
+### Managing Calibration and Signal Integrity
+
+</br>
 
 Calibration routines establish a reliable baseline for the EEG data, reducing noise and ensuring accurate readings. Create a dedicated function to collect and average data over a few seconds to establish calibration values.
 
-1. **Implement a Calibration Routine**: This should run a brief session and compute the mean for each channel, storing the values for later use.
+</br>
 
-**Insert the calibration function here:**
+**Implement a Calibration Routine**: This should run a brief session and compute the mean for each channel, storing the values for later use.
 
 ```python
 def calibrate():
@@ -433,7 +512,9 @@ def calibrate():
         logging.error(f"Unexpected calibration error: {e}")
 ```
 
-2. **Use Calibration for Real-Time Normalization**: Subtract the calibration values from incoming data to minimize drift. Update `read_eeg_data_brainflow()` to include **baseline correction**.
+</br>
+
+**Use Calibration for Real-Time Normalization**: Subtract the calibration values from incoming data to minimize drift. Update `read_eeg_data_brainflow()` to include **baseline correction**.
 
 ```python
 # Apply baseline correction if enabled
@@ -442,27 +523,23 @@ if baseline_correction_enabled:  # Assume this variable is set based on the chec
         data_transposed[idx] -= calibration_values[idx]
 ```
 
+</br>
+
 > **Tip:** Run the calibration routine multiple times to get a sense of the baseline variability. If values fluctuate too much, consider optimizing your setup (e.g., electrode placement).
 
-### 2.7. Exporting EEG Data for Offline Analysis
+</br>
+
+### Exporting EEG Data for Offline Analysis
+
+</br>
 
 Implement the data export functionality to allow users to save their EEG recordings for further analysis. This is crucial for researchers who want to dive deeper into the sessions and compare multiple recordings.
 
-**Insert the `export_data` route here:**
+</br>
+
+**Implement the `/export_data` route:**
 
 ```python
-# Function to create CSV data
-def create_csv(data):
-    import csv
-    import io
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['Channel' + str(i+1) for i in range(len(data))])
-    for row in zip(*data):
-        writer.writerow(row)
-    output.seek(0)
-    return output.getvalue()
-
 @app.route('/export-data')
 def export_data():
     try:
@@ -481,31 +558,45 @@ def export_data():
             "Internal Server Error",
             status=500
         )
-
-@socketio.on('set_file_path')
-def set_file_path(file_content):
-    global experiment_file_path, experiment_event
-    print("Received file content, length:", len(file_content))
-    # Save the file content to a temporary file
-    temp_file_path = 'temp_data.csv'
-    with open(temp_file_path, 'w') as f:
-        f.write(file_content)
-    
-    print(f"Saved file content to {temp_file_path}")
-    
-    experiment_file_path = temp_file_path
-    experiment_event.set()  # Signal that the file is ready
-
 ```
+
+</br>
+
+**Implement the `create_csv()` function which is called by `/export-data`:**
+
+```python
+# Function to create CSV data
+def create_csv(data):
+    import csv
+    import io
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Channel' + str(i+1) for i in range(len(data))])
+    for row in zip(*data):
+        writer.writerow(row)
+    output.seek(0)
+    return output.getvalue()
+```
+
+</br>
+
 ---
+
+</br>
 
 ## Part 3: Building the Front-End Interface and Integrating with the Flask Server
 
-### 3.1. Designing the HTML Structure
+</br>
 
-The front-end is where users will interact with the EEG analysis app, configure settings, and visualize brainwave data in real time. We’ll start by building a clean and intuitive interface using HTML.
+### Designing the HTML Structure
 
-**Insert your complete `index.html` file here:**
+</br>
+
+The front-end is where users will interact with the EEG analysis app, configure settings, and visualize brainwave data in real time. We’ll start by building a clean and intuitive interface using HTML. 
+
+</br>
+
+**Create `index.html`:**
 
 ```html
 <!-- v0.1a-->
@@ -569,13 +660,19 @@ The front-end is where users will interact with the EEG analysis app, configure 
 
 ```
 
-### 3.2. Styling the Interface with CSS
+</br>
+
+### Styling the Interface with CSS
+
+</br>
 
 Use CSS to style the interface, making it visually appealing and easy to navigate. Proper styling enhances usability and provides a better overall user experience.
 
-**Insert your complete `styles.css` file here:**
+</br>
 
-```
+**Create `styles.css`:**
+
+```css
 body {
     background-color: #121212;
     color: #e0e0e0;
@@ -635,13 +732,19 @@ input[type="range"] {
 
 ```
 
-### 3.3. Implementing the JavaScript for Real-Time Interactivity
+</br>
+
+### Implementing the JavaScript for Real-Time Interactivity
+
+</br>
 
 JavaScript is the backbone of the front-end interactivity. It manages WebSocket connections, updates the chart in real time, and handles user input. The script needs to ensure seamless communication with the Flask server, dynamically updating the chart based on incoming data.
 
-**Insert your complete `app.js` file here:**
+</br>
 
-```
+**Creaete `app.js`:**
+
+```js
 // Global Variables
 let ctx, eegChart;
 const socket = io();
@@ -807,19 +910,31 @@ function setupColorBoxListeners() {
 
 ```
 
-### 3.4. Explanation of Key JavaScript Functions
+</br>
+
+**Explanation of Key JavaScript Functions**
 
 1. **WebSocket Listeners**: The JavaScript listens for incoming data and updates the chart accordingly.
 2. **Dynamic Chart Updates**: Each time new data arrives, the chart is updated in real time.
 3. **User Input Handling**: Users can start/stop the analysis, change channels, and configure filters from the interface.
 
+</br>
+
 ---
+
+</br>
 
 ## Part 4: Testing, Debugging, and Optimizing the Application
 
-### 4.1. Running the Application
+</br>
+
+### Running the Application
+
+</br>
 
 With both the backend and front-end components set up, it’s time to run the complete EEG analysis application. Start the Flask server and open the web interface to see the real-time EEG data visualization.
+
+</br>
 
 1. **Start the Flask Server**:
 
@@ -827,26 +942,37 @@ With both the backend and front-end components set up, it’s time to run the co
     python main.py
     ```
 
+</br>
+
 2. **Access the Web Interface**:
    Open your web browser and go to `http://<your-raspberry-pi-ip>:5000`.
+
+</br>
 
 3. **Interacting with the Interface**:
    Use the controls to start/stop the analysis, configure settings, and observe the real-time EEG data on the chart.
 
-### 4.2. Final Testing Checklist
+
+</br>
+
+**Final Testing Checklist**
 
 - **Real-Time Data Accuracy**: Verify that the EEG data displayed matches expected patterns (e.g., alpha and beta waves).
 - **Interface Responsiveness**: Ensure that all buttons and controls respond quickly to user inputs.
 - **Data Export**: Test the CSV export functionality with different session lengths.
 
+</br>
+
 ---
 
+</br>
+
 ## Conclusion
+
+</br>
 
 Congratulations! You’ve successfully built a real-time EEG analysis app using Flask, BrainFlow, and PiEEG. This project showcases the power of open-source tools and hardware in creating complex biosignal applications.
 
 With a fully functioning system, you can now explore advanced use cases like neurofeedback, brain-computer interaction, or integrating machine learning models for cognitive state classification.
-
-**Next Steps**: Expand the project by adding more channels, exploring machine learning models, or developing custom neurofeedback protocols.
 
 ---
