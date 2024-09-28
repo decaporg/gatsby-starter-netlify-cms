@@ -3,7 +3,7 @@ templateKey: blog-post
 title: "Hacking the Mind: A Step-by-Step Guide to Building a BCI"
 date: 2024-09-11T19:09:37.340Z
 description: "Everything you need to know to build your own Brain-Computer Interface at home."
-featuredpost: true
+featuredpost: false
 featuredimage: /img/img_0505.jpeg
 tags:
   - bci
